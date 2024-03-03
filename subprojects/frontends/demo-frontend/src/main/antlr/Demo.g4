@@ -1,50 +1,84 @@
 grammar Demo;
 
-// TODO add rules for branching
-
 // parser rules - order does not matter
-model: (assignment)* assertion;
+model: (assignment | statement | return)* assertion;
 
-assignment: VarName ':=' (expression|value); // why do we have value instead of Const?
+assignment: VarName ASSIGN expression SCOL;
+statement: if_statement | while_statement;
+assertion: ASSERT expression SCOL;
+command: return | break | continue;
 
-assertion: 'assert' comparison; // I could make a lexer rule for assert as well - both works
+if_statement: IF cond_block (ELSE IF cond_block)* (ELSE block)?;
+while_statement: WHILE cond_block;
 
-expression: (VarName|Const) BinOp (VarName|Const); // how to modify, so that we can have nested expressions?
+block: (OBRACE (assignment | statement | command)* CBRACE) | (assignment | statement | command);
+cond_block: OPEN expression CLOSE block;
 
-// the fact that it is parseable does not mean it is semantically correct/meaningful!
-// e.g., here: we do not check if varName is anywhere else
-comparison: VarName ComparisonOp Const;
+expression : MIN expression
+           | NOT expression
+           | expression (MULT | DIV | MOD) expression
+           | expression (PLUS | MIN) expression
+           | expression (LT | GT | GTEQ | LTEQ) expression
+           | expression (EQ | NEQ) expression
+           | expression (AND | OR) expression
+           | OPEN expression CLOSE
+           | value;
 
-value: Const|'input';
+value: Const | INPUT | TRUE | FALSE | NULL | VarName;
 
-// lexer rules - order does matter! How are they differentiated from
-VarName: Letter(Letter|Digit|Underscore)*; // * vs ? vs + (like regex)
+return: RETURN expression? SCOL;
+break: BREAK SCOL;
+continue: CONTINUE SCOL;
 
-ComparisonOp: Equal | Less | Greater;
-Equal: '==';
-Less : '<';
-Greater : '>';
+// Lexer rules - order does matter!
+// Keywords
+INPUT: 'input';
+ASSERT: 'assert';
+TRUE: 'true';
+FALSE: 'false';
+NULL: 'null';
+IF: 'if';
+ELSE: 'else';
+WHILE: 'while';
+RETURN: 'return';
+CONTINUE: 'continue';
+BREAK: 'break';
 
-// could we make this to be a parser rule instead? Any parser rules that could be made into a parser rule instead?
-BinOp : Plus | Minus;
+// Symbols
+OR: '||';
+AND: '&&';
+EQ: '==';
+NEQ: '!=';
+LT: '<';
+GT: '>';
+GTEQ: '>=';
+LTEQ: '<=';
+NOT: '!';
+ASSIGN: ':=';
+PLUS: '+';
+MIN: '-';
+MULT: '*';
+DIV: '/';
+MOD: '%';
+UNDER: '_';
+SCOL: ';';
+OPEN: '(';
+CLOSE: ')';
+OBRACE: '{';
+CBRACE: '}';
 
-Plus : '+';
-Minus : '-';
+VarName: Letter(Letter | Digit | UNDER)*;
+Const: (MIN)?(Digit)+;
 
-Underscore : '_';
-
-Const: (Minus)?(Digit)+;
-Letter: [a-z];
+Letter: [a-z] | [A-Z];
 Digit: [0-9];
 
-Whitespace
-    :   [ \t]+
-        -> skip
-    ;
+// Ignored
+Comment: '#' ~[\r\n]*
+    -> skip;
 
-Newline
-    :   (   '\r' '\n'?
-        |   '\n'
-        )
-        -> skip
-    ;
+Whitespace: [ \t]+
+    -> skip;
+
+Newline: ('\r' '\n'? | '\n')
+    -> skip;
