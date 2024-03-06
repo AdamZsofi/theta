@@ -19,7 +19,6 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 import hu.bme.mit.theta.frontend.ParseContext;
 
 public class CFor extends CStatement {
-
     private final CStatement body;
     private final CStatement init;
     private final CStatement guard;

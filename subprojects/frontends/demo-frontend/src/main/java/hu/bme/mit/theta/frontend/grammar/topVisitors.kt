@@ -3,6 +3,8 @@ package hu.bme.mit.theta.frontend.grammar
 import hu.bme.mit.theta.demo.frontend.dsl.gen.DemoBaseVisitor
 import hu.bme.mit.theta.demo.frontend.dsl.gen.DemoLexer
 import hu.bme.mit.theta.demo.frontend.dsl.gen.DemoParser
+import hu.bme.mit.theta.frontend.model.DemoAssertion
+import hu.bme.mit.theta.frontend.model.DemoExpression
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
@@ -11,6 +13,20 @@ import org.antlr.v4.runtime.CommonTokenStream
 // you can also utilize that intellij can convert Java code to Kotlin (just paste java code in a kotlin file)
 // https://github.com/ftsrg/theta/tree/btor2-frontend/subprojects/frontends/btor2-frontend
 // https://github.com/ftsrg/theta/tree/trace-generation/subprojects/frontends/promela-frontend
+
+class AssertionVisitor(val exprVisitor : ExpressionVisitor) : DemoBaseVisitor<DemoAssertion>() {
+    override fun visitAssertion(ctx: DemoParser.AssertionContext?): DemoAssertion {
+        val demoExpression = ctx!!.expression().accept(exprVisitor)
+        return DemoAssertion(demoExpression)
+    }
+}
+
+class ExpressionVisitor : DemoBaseVisitor<DemoExpression>() {
+    override fun visitBinExpr(ctx: DemoParser.BinExprContext?): DemoExpression {
+        return super.visitBinExpr(ctx)
+    }
+}
+
 class ModelVisitor : DemoBaseVisitor<String>() {
     override fun visitModel(ctx: DemoParser.ModelContext?): String {
         val assignments =
